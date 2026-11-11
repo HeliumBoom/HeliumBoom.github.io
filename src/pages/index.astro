@@ -1,0 +1,271 @@
+---
+import { getCollection } from "astro:content";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Card from "@/components/Card.astro";
+import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
+import IconRss from "@/assets/icons/IconRss.svg";
+import { getSortedPosts } from "@/utils/getSortedPosts";
+import config from "@/config";
+
+const locale = Astro.currentLocale ?? config.site.lang;
+const posts = getSortedPosts(await getCollection("posts"));
+const homePath = getRelativeLocaleUrl(locale, "");
+---
+
+<Layout title="HeliumBoom · 个人主页与技术博客">
+  <Header />
+  <main
+    id="main-content"
+    data-layout="index"
+    data-home-path={homePath}
+    class="app-layout"
+  >
+    <section class="hero" aria-labelledby="hello">
+      <p class="eyebrow">A LITTLE SPACE FOR IDEAS</p>
+      <div class="hero-heading">
+        <h1 id="hello">
+          你好，我是<br /><span
+            >HeliumBoom<span class="accent-dot">.</span></span>
+        </h1>
+        <div class="element-mark" aria-hidden="true">
+          <span class="element-number">02</span>
+          <strong>He</strong>
+          <span class="element-name">HELIUM</span>
+        </div>
+      </div>
+      <p class="intro">
+        欢迎来到我的个人主页与技术博客。<br
+        />记录技术探索、开发实践，以及从问题到答案的过程。
+      </p>
+      <div class="hero-links">
+        <a class="primary-link" href={getRelativeLocaleUrl(locale, "posts")}
+          >开始阅读 <IconArrowRight width={18} height={18} /></a
+        >
+        <a href={getRelativeLocaleUrl(locale, "about")}
+          >关于我 <span aria-hidden="true">↗</span></a
+        >
+        <a
+          href="https://github.com/HeliumBoom"
+          target="_blank"
+          rel="me noopener noreferrer"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </section>
+
+    <section class="latest-section" aria-labelledby="latest">
+      <div class="section-heading">
+        <div>
+          <span class="section-number" aria-hidden="true">01 /</span><h2
+            id="latest"
+          >
+            最新文章
+          </h2>
+        </div>
+        <a href={getRelativeLocaleUrl(locale, "posts")} class="all-posts"
+          >全部文章 <span aria-hidden="true">↗</span></a
+        >
+      </div>
+      <ul class="post-list">
+        {
+          posts
+            .slice(0, config.posts.perIndex)
+            .map(post => <Card variant="h3" {...post} />)
+        }
+      </ul>
+      {
+        posts.length === 0 && (
+          <p class="text-muted-foreground py-8">
+            第一篇记录正在路上，欢迎稍后再来。
+          </p>
+        )
+      }
+    </section>
+
+    <aside class="reading-note" aria-label="订阅更新">
+      <div>
+        <p>慢慢积累，持续记录。</p><span
+          >文章更新时，让 RSS 帮你记得回来。</span>
+      </div>
+      <a href="/rss.xml"><IconRss width={18} height={18} /> 订阅 RSS</a>
+    </aside>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .hero {
+    padding: 4.5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    font-family: Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: var(--muted-foreground);
+    margin-bottom: 1.5rem;
+  }
+  .hero-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  h1 {
+    font-size: clamp(2.3rem, 6vw, 3.5rem);
+    font-weight: 650;
+    line-height: 1.3;
+    letter-spacing: -0.035em;
+  }
+  h1 > span {
+    letter-spacing: -0.05em;
+  }
+  .accent-dot {
+    color: var(--accent);
+  }
+  .element-mark {
+    display: flex;
+    flex-direction: column;
+    width: 110px;
+    height: 130px;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    flex: 0 0 auto;
+    transform: rotate(4deg);
+    border-radius: 3px;
+  }
+  .element-number {
+    font:
+      0.7rem/1.5 Consolas,
+      monospace;
+  }
+  .element-mark strong {
+    font-size: 3.2rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .element-name {
+    font:
+      0.6rem/1.5 Consolas,
+      monospace;
+    letter-spacing: 0.15em;
+  }
+  .intro {
+    color: var(--muted-foreground);
+    margin-top: 1.75rem;
+    line-height: 2;
+    font-size: 1rem;
+  }
+  .hero-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+    font-size: 0.9rem;
+  }
+  .hero-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .hero-links a:hover,
+  .all-posts:hover {
+    color: var(--accent);
+  }
+  .primary-link {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .latest-section {
+    padding-top: 2.75rem;
+  }
+  .section-heading,
+  .section-heading > div {
+    display: flex;
+    align-items: center;
+  }
+  .section-heading {
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .section-number {
+    font:
+      0.75rem Consolas,
+      monospace;
+    color: var(--muted-foreground);
+    margin-right: 0.75rem;
+  }
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  .all-posts {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+  }
+  .post-list :global(li) {
+    margin: 0;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .post-list :global(h3) {
+    font-size: 1.15rem;
+  }
+  .post-list :global(p) {
+    color: var(--muted-foreground);
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+    line-height: 1.9;
+  }
+  .reading-note {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem 0 3rem;
+    margin-top: 1.5rem;
+  }
+  .reading-note p {
+    font-size: 0.9rem;
+  }
+  .reading-note span {
+    color: var(--muted-foreground);
+    font-size: 0.8rem;
+  }
+  .reading-note a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--accent);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  @media (max-width: 480px) {
+    .hero {
+      padding: 3rem 0 2.5rem;
+    }
+    .element-mark {
+      display: none;
+    }
+    .intro {
+      font-size: 0.95rem;
+    }
+    .reading-note {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const main = document.querySelector<HTMLElement>('[data-layout="index"]');
+    if (main) sessionStorage.setItem("backUrl", main.dataset.homePath ?? "/");
+  });
+</script>
