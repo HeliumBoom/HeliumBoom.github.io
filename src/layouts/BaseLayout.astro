@@ -17,6 +17,8 @@ const canonical = new URL(Astro.url.pathname === withBase("/404/") ? withBase("/
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
+    <!-- Native light/dark themes must not be recolored again by Dark Reader. -->
+    <meta name="darkreader-lock" />
     <link rel="icon" type="image/svg+xml" href={withBase("/favicon.svg")} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
