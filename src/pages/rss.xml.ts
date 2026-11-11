@@ -1,22 +1,23 @@
-import rss from "@astrojs/rss";
-import { getCollection } from "astro:content";
-import { getSortedPosts } from "@/utils/getSortedPosts";
-import { getPostUrl } from "@/utils/getPostPaths";
-import config from "@/config";
+import rss from '@astrojs/rss'
+import type { APIRoute } from 'astro'
+import { getPublishedPosts } from '@/utils/content'
+import { siteConfig } from '@/config/site.config'
+import { getLocale } from '@/config/i18n.config'
+import { buildUrl, extractExcerptFromMarkdown, getPostUrl } from '@/utils/helpers'
 
-export async function GET() {
-  const posts = await getCollection("posts");
-  const sortedPosts = getSortedPosts(posts);
-
+export const GET:APIRoute = async(context) => {
+  const blog = (await getPublishedPosts()).sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   return rss({
-    title: config.site.title,
-    description: config.site.description,
-    site: config.site.url,
-    items: sortedPosts.map(({ data, id, filePath }) => ({
-      link: getPostUrl(id, filePath, config.site.lang),
-      title: data.title,
-      description: data.description,
-      pubDate: new Date(data.modDatetime ?? data.pubDatetime),
+    title: siteConfig.name,
+    description: siteConfig.description,
+    site: new URL(buildUrl(''), context.site || siteConfig.site || siteConfig.url),
+    items: blog.map((post) => ({
+      title: post.data.title,
+      pubDate: post.data.date,
+      description: post.data.description || extractExcerptFromMarkdown(post.body || ''),
+      link: getPostUrl(post.id)
     })),
-  });
+    customData: `<language>${getLocale(siteConfig.locale).toLowerCase()}</language>`,
+    stylesheet: buildUrl('rss.xsl')
+  })
 }

@@ -37,3 +37,6 @@ compose.override.yaml
 # local verification artifacts
 .local/
 .superpowers/
+
+# Pudding generated link data
+.cache/

@@ -1,32 +1,25 @@
 ---
-import { getCollection } from "astro:content";
-import Layout from "@/layouts/Layout.astro";
-import Header from "@/components/Header.astro";
-import Breadcrumb from "@/components/Breadcrumb.astro";
-import Main from "@/components/Main.astro";
-import Footer from "@/components/Footer.astro";
-import Tag from "@/components/Tag.astro";
-import { getUniqueTags } from "@/utils/getUniqueTags";
-import { useTranslations } from "@/i18n";
-import config from "@/config";
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getPublishedPosts } from '@/utils/content'
+import { getTagUrl } from '@/utils/helpers'
 
-const posts = await getCollection("posts", ({ data }) => !data.draft);
-const tags = getUniqueTags(posts);
-
-const locale = Astro.currentLocale ?? config.site.lang;
-const t = useTranslations(locale);
+const counts = new Map<string, number>()
+for (const post of await getPublishedPosts()) {
+  for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) || 0) + 1)
+}
+const tags = [...counts].sort(([a], [b]) => a.localeCompare(b, 'zh-CN'))
 ---
 
-<Layout title={`${t.pages.tagsTitle} | ${config.site.title}`}>
-  <Header />
-
-  <Breadcrumb />
-
-  <Main pageTitle={t.pages.tagsTitle} pageDesc={t.pages.tagsDesc}>
-    <ul class="flex flex-wrap gap-6">
-      {tags.map(({ tag, tagName }) => <Tag {tag} {tagName} />)}
-    </ul>
-  </Main>
-
-  <Footer />
-</Layout>
+<BaseLayout pageTitle="标签">
+  <section class="tag-index">
+    <h1>标签</h1>
+    <p>按主题寻找文章。</p>
+    <ul>{tags.map(([tag, count]) => <li><a href={getTagUrl(tag)}>{tag} <span>· {count}</span></a></li>)}</ul>
+  </section>
+</BaseLayout>
+<style>
+  .tag-index { padding: 2rem 1rem; }
+  p, span { color: var(--text-secondary); }
+  ul { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; padding: 0; }
+  a { display: block; padding: .5rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+</style>

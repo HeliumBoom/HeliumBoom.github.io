@@ -1,230 +1,403 @@
 ---
-import { getRelativeLocaleUrl } from "astro:i18n";
-import IconUnderline from "@/assets/icons/IconUnderline.svg";
-import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
-import IconArchive from "@/assets/icons/IconArchive.svg";
-import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
-import IconSearch from "@/assets/icons/IconSearch.svg";
-import IconMoon from "@/assets/icons/IconMoon.svg";
-import IconX from "@/assets/icons/IconX.svg";
-import LinkButton from "./LinkButton.astro";
-import { stripBase, stripLocale } from "@/utils/withBase";
-import { useTranslations } from "@/i18n";
-import config from "@/config";
+import ThemeToggle from './ThemeToggle.svelte'
+import { siteConfig } from '@/config/site.config'
+import { isPostPage, buildUrl, getPostUrl } from '@/utils/helpers'
+import Search from './Search.svelte'
+import { getPublishedPosts } from '@/utils/content'
+import { t } from '@/utils/i18n'
 
-const { site, features } = config;
+interface Props {
+  pageTitle: string;
+}
 
-const locale = Astro.currentLocale ?? config.site.lang;
-const t = useTranslations(locale);
+const { pageTitle } = Astro.props as Props
 
-// Strip the base prefix so isActive comparisons work regardless of deploy subdirectory.
-// e.g. with base "/blog": "/blog/posts/slug" → "/posts/slug"
-const relativePath = stripBase(Astro.url.pathname);
-const pathWithoutTrailingSlash =
-  relativePath.endsWith("/") && relativePath !== "/"
-    ? relativePath.slice(0, -1)
-    : relativePath;
+const navItems = siteConfig.navItems
+const normalizePath = (pathname: string) => pathname.replace(/\/+$/, '') || '/'
+const isNavActive = (href: string) => normalizePath(Astro.url.pathname) === normalizePath(new URL(buildUrl(href), Astro.url).pathname)
 
-const currentPath = stripLocale(pathWithoutTrailingSlash, locale);
-
-const isActive = (path: string) => {
-  const currentPathArray = currentPath.split("/").filter(p => p.trim());
-  const pathArray = path.split("/").filter(p => p.trim());
-  return currentPath === path || currentPathArray[0] === pathArray[0];
-};
+const isPostsPage = isPostPage(Astro.url.pathname)
+const allPosts = await getPublishedPosts()
+const searchablePosts = allPosts.map((post) => ({
+  id: post.id,
+  title: post.data.title,
+  url: getPostUrl(post.id)
+  // 不再在这里传递 content，改用异步加载索引
+}));
 ---
 
-<a
-  id="skip-to-content"
-  href="#main-content"
-  class="bg-background text-accent absolute inset-s-16 -top-full z-50 px-3 py-2 backdrop-blur-lg transition-all focus:top-4"
->
-  {t.a11y.skipToContent}
-</a>
+<header class="header" id="header">
+  <div class="header-container">
+    <div class="brand">
+      <a href={buildUrl('')} class="logo-link">
+        <span class="logo">{siteConfig.name}</span>
+      </a>
+    </div>
 
-<header
-  class="app-layout flex flex-col items-center justify-between sm:flex-row"
->
-  <div
-    class="border-border bg-background relative flex w-full items-baseline justify-between border-b py-4 sm:items-center sm:py-6"
-  >
-    <a
-      href={getRelativeLocaleUrl(locale, "")}
-      class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"
-    >
-      <span
-        class="bg-accent text-accent-foreground me-2 inline-flex size-7 items-center justify-center rounded-sm text-sm font-semibold"
-        aria-hidden="true">H.</span
-      >{site.title}
-    </a>
-    <nav
-      id="nav-menu"
-      class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
-    >
+    <div class="middle-content">
+      <div class="scroll-container" id="scroll-container">
+        <nav class="nav-content" id="nav">
+          <ul class="nav-list">
+            {
+              navItems.map((item) => (
+                <li class="nav-item">
+                  <a
+                    href={buildUrl(item.href)}
+                    class="nav-link"
+                    aria-current={isNavActive(item.href) ? 'page' : undefined}
+                    class:list={{
+                      'is-active': isNavActive(item.href)
+                    }}
+                  >
+                    {t(`header.nav.${item.labelKey}` as any)}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+
+        {
+          isPostsPage && (
+            <div class="title-content" id="page-title">
+              <span>{pageTitle}</span>
+            </div>
+          )
+        }
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <Search client:load searchablePosts={searchablePosts} />
+      <ThemeToggle client:load />
+
       <button
-        id="menu-btn"
-        class="focus-outline self-end p-2 sm:hidden"
-        aria-label={t.a11y.openMenu}
+        class="menu-toggle"
+        id="menu-toggle"
+        type="button"
+        aria-label={t('common.menu.toggle')}
         aria-expanded="false"
-        aria-controls="menu-items"
-        data-label-open={t.a11y.openMenu}
-        data-label-close={t.a11y.closeMenu}
+        aria-controls="nav"
       >
-        <IconX id="close-icon" class="hidden" />
-        <IconMenuDeep id="menu-icon" />
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
-      <ul
-        id="menu-items"
-        class="[&>li>a]:hover:text-accent mt-4 hidden w-44 grid-cols-2 place-content-center gap-2 sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0 sm:[&>li]:h-8 [&>li>a]:block [&>li>a]:px-4 [&>li>a]:py-3 [&>li>a]:text-center [&>li>a]:font-medium sm:[&>li>a]:px-2 sm:[&>li>a]:py-1"
-      >
-        <li class="col-span-2">
-          <a
-            href={getRelativeLocaleUrl(locale, "posts")}
-            class:list={{ "active-nav": isActive("/posts") }}
-          >
-            {t.nav.posts}
-          </a>
-        </li>
-        <li class="col-span-2">
-          <a
-            href={getRelativeLocaleUrl(locale, "tags")}
-            class:list={{ "active-nav": isActive("/tags") }}
-          >
-            {t.nav.tags}
-          </a>
-        </li>
-        <li class="col-span-2">
-          <a
-            href={getRelativeLocaleUrl(locale, "about")}
-            class:list={{ "active-nav": isActive("/about") }}
-          >
-            {t.nav.about}
-          </a>
-        </li>
-        {
-          features.showArchives && (
-            <li class="col-span-2">
-              <LinkButton
-                href={getRelativeLocaleUrl(locale, "archives")}
-                class:list={[
-                  "focus-outline flex size-full justify-center p-3 sm:relative sm:size-8 sm:p-0",
-                  { "active-nav": isActive("/archives") },
-                ]}
-                title={t.nav.archives}
-                aria-label={t.nav.archives}
-              >
-                <IconArchive class="hidden sm:absolute sm:top-1/2 sm:left-1/2 sm:block sm:size-6 sm:-translate-x-1/2 sm:-translate-y-1/2" />
-                <span class="sm:sr-only">{t.nav.archives}</span>
-                {isActive("/archives") && (
-                  <IconUnderline
-                    aria-hidden="true"
-                    class="scale-125 max-sm:hidden sm:absolute sm:bottom-0 sm:w-6"
-                  />
-                )}
-              </LinkButton>
-            </li>
-          )
-        }
-        {
-          features.search !== false && (
-            <li class="col-span-1 flex items-center justify-center">
-              <LinkButton
-                href={getRelativeLocaleUrl(locale, "search")}
-                class:list={["focus-outline relative size-8"]}
-                title={t.nav.search}
-                aria-label={t.nav.search}
-              >
-                <IconSearch class="absolute top-1/2 left-1/2 size-6 -translate-x-1/2 -translate-y-1/2" />
-                <span class="sr-only">{t.nav.search}</span>
-                {isActive("/search") && (
-                  <IconUnderline
-                    aria-hidden="true"
-                    class="absolute bottom-0 w-6 scale-125 max-sm:inset-s-2"
-                  />
-                )}
-              </LinkButton>
-            </li>
-          )
-        }
-        {
-          features.lightAndDarkMode && (
-            <li class="col-span-1 flex items-center justify-center">
-              <button
-                id="theme-btn"
-                class="focus-outline hover:[&>svg]:stroke-accent relative size-12 p-4 sm:size-8"
-                title={t.a11y.toggleTheme}
-                aria-label={t.a11y.toggleTheme}
-                aria-pressed="false"
-                aria-live="polite"
-              >
-                <IconMoon class="absolute top-[50%] left-[50%] translate-[-50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-                <IconSunHigh class="absolute top-[50%] left-[50%] translate-[-50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-              </button>
-            </li>
-          )
-        }
-      </ul>
-    </nav>
+    </div>
   </div>
 </header>
 
 <script>
-  function toggleNav() {
-    const menuBtn = document.querySelector<HTMLButtonElement>("#menu-btn");
-    const menuItems = document.querySelector("#menu-items");
-    const menuIcon = document.querySelector("#menu-icon");
-    const closeIcon = document.querySelector("#close-icon");
+(function() {
+  // 滚动状态变量（保持在外部以保存状态）
+  let lastScrollTop = 0
+  let currentDirection = 'down'
+  let scrollDistance = 0
+  const threshold = 50
+  let showingNav = true // 当前是否显示导航（而非标题）
 
-    if (!menuBtn || !menuItems || !menuIcon || !closeIcon) return;
-
-    const openLabel = menuBtn.dataset.labelOpen ?? "Open menu";
-    const closeLabel = menuBtn.dataset.labelClose ?? "Close menu";
-
-    menuBtn.addEventListener("click", () => {
-      const openMenu = menuBtn.getAttribute("aria-expanded") === "true";
-
-      menuBtn.setAttribute("aria-expanded", openMenu ? "false" : "true");
-      menuBtn.setAttribute("aria-label", openMenu ? openLabel : closeLabel);
-
-      menuItems.classList.toggle("hidden");
-      menuItems.classList.toggle("grid");
-      menuIcon.classList.toggle("hidden");
-      closeIcon.classList.toggle("hidden");
-    });
+  function setMenuOpen(open: boolean) {
+    const toggle = document.getElementById('menu-toggle')
+    toggle?.setAttribute('aria-expanded', String(open))
+    const nav = document.getElementById('nav')
+    nav?.classList.toggle('nav-open', open)
+    if (nav) nav.inert = window.innerWidth <= 768 && !open
+    document.getElementById('scroll-container')?.classList.toggle('nav-open', open)
+    document.getElementById('header')?.classList.toggle('menu-open', open)
   }
 
-  function handleSkipToContent() {
-    const skipLink = document.getElementById("skip-to-content");
-    if (!skipLink) return;
-    skipLink.addEventListener("click", e => {
-      if (
-        e.defaultPrevented ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.shiftKey ||
-        e.button !== 0
-      )
-        return;
-      e.preventDefault();
-      const target = document.getElementById("main-content");
-      if (target) {
-        target.setAttribute("tabindex", "-1");
-        target.addEventListener(
-          "blur",
-          () => target.removeAttribute("tabindex"),
-          {
-            once: true,
-          }
-        );
-        target.focus();
-        target.scrollIntoView({ behavior: "smooth" });
+  document.addEventListener('click', event => {
+    if (!(event.target instanceof Element)) return
+    const toggle = event.target.closest('#menu-toggle')
+    if (toggle) {
+      setMenuOpen(toggle.getAttribute('aria-expanded') !== 'true')
+    } else if (!event.target.closest('#header') || event.target.closest('#nav a')) {
+      setMenuOpen(false)
+    }
+  })
+  document.addEventListener('keydown', event => {
+    const toggle = document.getElementById('menu-toggle')
+    if (event.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') {
+      setMenuOpen(false)
+      toggle.focus()
+    }
+  })
+  window.addEventListener('resize', () => setMenuOpen(false))
+  document.addEventListener('focusin', event => {
+    if (window.innerWidth > 768 && event.target instanceof Element && event.target.closest('#nav')) {
+      showingNav = true
+      const container = document.getElementById('scroll-container')
+      if (container) container.style.transform = 'translateY(0)'
+    }
+  })
+
+  // 滚动处理函数：每次运行时重新查询相关 DOM 元素以应对 SPA 替换
+  function handleScroll() {
+    if (window.innerWidth <= 768) return
+
+    const header = document.getElementById('header')
+    const pageTitle = document.getElementById('page-title')
+    const scrollContainer = document.getElementById('scroll-container')
+    const isPostsPage = !!pageTitle
+
+    header?.classList.toggle('scrolled', window.scrollY > 10)
+
+    if (!header || !isPostsPage || !pageTitle || !scrollContainer) return
+
+    const scrollTop = window.scrollY
+    const newDirection = scrollTop > lastScrollTop ? 'down' : 'up'
+
+    if (newDirection !== currentDirection) {
+      currentDirection = newDirection
+      scrollDistance = 0
+    }
+
+    scrollDistance += Math.abs(scrollTop - lastScrollTop)
+
+    if (scrollDistance >= threshold) {
+      if (currentDirection === 'down' && showingNav) {
+        showingNav = false
+        scrollContainer.style.transform = 'translateY(-100%)'
+      } else if (currentDirection === 'up' && !showingNav) {
+        showingNav = true
+        scrollContainer.style.transform = 'translateY(0)'
       }
-    });
+      scrollDistance = 0
+    }
+
+    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop
   }
 
-  toggleNav();
-  document.addEventListener("astro:after-swap", toggleNav);
+  let scrollListenerAttached = false
+  function ensureScrollListener() {
+    if (scrollListenerAttached) return
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    scrollListenerAttached = true
+  }
 
-  handleSkipToContent();
-  document.addEventListener("astro:after-swap", handleSkipToContent);
+  document.addEventListener('astro:page-load', () => {
+    lastScrollTop = 0
+    currentDirection = 'down'
+    scrollDistance = 0
+    showingNav = true
+    setMenuOpen(false)
+    const scrollContainer = document.getElementById('scroll-container')
+    if (scrollContainer) scrollContainer.style.transform = 'translateY(0)'
+    setTimeout(handleScroll, 50)
+    ensureScrollListener()
+  })
+
+  ensureScrollListener()
+  setMenuOpen(false)
+  handleScroll()
+})()
 </script>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+  }
+
+  .header.scrolled {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    height: 60px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo-link {
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.25rem;
+    transition: color 0.2s ease;
+  }
+  .logo-link:hover {
+    color: var(--theme-color);
+  }
+  .middle-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .scroll-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.3s ease;
+    will-change: transform;
+  }
+
+  .nav-content,
+  .title-content {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .nav-list {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-item {
+    position: relative;
+  }
+
+  .nav-link {
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: color 0.2s ease;
+  }
+
+  .nav-link:hover,
+  .nav-link.is-active {
+    color: var(--theme-color);
+  }
+
+  .title-content {
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    white-space: nowrap;
+  }
+
+  .menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .menu-toggle span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background-color: var(--text-primary);
+    margin: 2px 0;
+    transition: all 0.3s ease;
+    transform-origin: center;
+  }
+
+  @media (max-width: 768px) {
+    .header-container {
+      padding: 0 1rem;
+    }
+
+    .menu-toggle {
+      display: flex;
+    }
+
+    .middle-content {
+      position: static;
+    }
+
+    .scroll-container {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: var(--bg-primary);
+      border-top: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      height: 0;
+      overflow: hidden;
+      transition: height 0.3s ease;
+      transform: none !important;
+    }
+
+    .scroll-container.nav-open {
+      height: auto;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .nav-content {
+      height: auto;
+      display: block;
+      padding: 1rem 0;
+    }
+
+    .nav-list {
+      flex-direction: column;
+      gap: 0;
+      padding: 0 1.5rem;
+    }
+
+    .nav-item {
+      width: 100%;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-link:last-child {
+      border-bottom: none;
+    }
+
+    .title-content {
+      display: none;
+    }
+
+    .menu-toggle[aria-expanded="true"] span:nth-child(1) {
+      transform: translateY(6px) rotate(45deg);
+    }
+
+    .menu-toggle[aria-expanded="true"] span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .menu-toggle[aria-expanded="true"] span:nth-child(3) {
+      transform: translateY(-6px) rotate(-45deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header,
+    .scroll-container,
+    .menu-toggle span {
+      transition: none;
+    }
+  }
+</style>
