@@ -5,6 +5,7 @@
   let theme: Theme = 'light';
   let transitionSequence = 0;
   let activeTransition: ViewTransition | null = null;
+  let activeAnimation: Animation | null = null;
 
   function savedTheme(): Theme | null {
     try {
@@ -30,6 +31,8 @@
   function applyTheme(newTheme: Theme, event?: MouseEvent) {
     const sequence = ++transitionSequence;
     activeTransition?.skipTransition();
+    activeAnimation?.cancel();
+    activeAnimation = null;
     const html = document.documentElement;
     html.classList.remove('theme-transitioning');
     if (!document.startViewTransition || !event || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -43,22 +46,28 @@
     const y = event.detail === 0 ? rect.top + rect.height / 2 : event.clientY;
     const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
     try {
+      let circleAnimation: Animation | null = null;
       const transition = document.startViewTransition(() => { if (sequence === transitionSequence) executeThemeChange(newTheme); });
       activeTransition = transition;
       void transition.ready.then(() => {
         if (sequence !== transitionSequence) return;
         const clipPath = [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`];
-        html.animate({ clipPath: newTheme === 'dark' ? [...clipPath].reverse() : clipPath }, {
+        circleAnimation = html.animate({ clipPath: newTheme === 'dark' ? [...clipPath].reverse() : clipPath }, {
           duration: 500,
           easing: 'ease-in-out',
           pseudoElement: newTheme === 'dark' ? '::view-transition-old(root)' : '::view-transition-new(root)',
           fill: 'both'
         });
+        activeAnimation = circleAnimation;
       }).catch(() => { /* A skipped transition still applies the theme. */ });
       void transition.finished.catch(() => {}).finally(() => {
+        // Filled pseudo-element animations survive their snapshot tree unless cancelled.
+        // Release only this transition's animation; a newer one may already be running.
+        circleAnimation?.cancel();
         if (sequence === transitionSequence) {
           html.classList.remove('theme-transitioning');
           activeTransition = null;
+          activeAnimation = null;
         }
       });
     } catch {
@@ -82,6 +91,8 @@
     return () => {
       ++transitionSequence;
       activeTransition?.skipTransition();
+      activeAnimation?.cancel();
+      activeAnimation = null;
       document.documentElement.classList.remove('theme-transitioning');
       mediaQuery.removeEventListener('change', handleSystemThemeChange);
       window.removeEventListener('storage', handleStorageChange);
@@ -103,49 +114,37 @@
   aria-label={t('common.theme.label', { current: t(`common.theme.${theme}`), target: t(`common.theme.${theme === 'dark' ? 'light' : 'dark'}`) })}
   aria-pressed={theme === "dark"}
 >
-  <span class="theme-options">
-    <span
-      class="nav-link light"
-      aria-hidden="true"
-    >
-      {t('common.theme.light')}
-    </span>
-
-    <span aria-hidden="true">/</span>
-
-    <span
-      class="nav-link dark"
-      aria-hidden="true"
-    >
-      {t('common.theme.dark')}
-    </span>
-    <span class="indicator theme-toggle-indicator" aria-hidden="true"></span>
-  </span>
+  <svg class="theme-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+    aria-hidden="true" focusable="false">
+    {#if theme === 'dark'}
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+    {:else}
+      <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+    {/if}
+  </svg>
 </button>
 
 <style>
   .theme-toggle-container {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
     margin: 0;
     padding: 0;
     border: none;
-    outline: none;
     background: none;
     font: inherit;
     color: inherit;
     cursor: pointer;
-    position: relative;
+    border-radius: 50%;
   }
 
-  .indicator.theme-toggle-indicator {
-    left: 0;
-    position: absolute;
-    bottom: -3px;
-    width: 50%;
-    height: 3px;
-    border-radius: 3px;
-    background: var(--primary-color);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    view-transition-name: theme-indicator;
+  .theme-toggle-container:hover {
+    color: var(--primary-color);
+    background: var(--color-theme-mix-10);
   }
 
 
@@ -157,7 +156,7 @@
 
   /* View Transitions for Theme Toggle */
   :global(.theme-transitioning),
-  :global(.theme-transitioning *:not(.theme-toggle-indicator)) {
+  :global(.theme-transitioning *) {
     transition: none !important;
   }
   :global(.theme-transitioning::view-transition-group(root)),

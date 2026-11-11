@@ -25,18 +25,6 @@ img {
   border-radius: var(--radius-md);
 }
 
-html[data-theme="dark"] .theme-toggle-indicator {
-  transform: translateX(calc(100% + 3px));
-}
-
-html[data-theme="dark"] .theme-options .nav-link.dark {
-  color: var(--primary-color)
-}
-
-html[data-theme="light"] .theme-options .nav-link.light {
-  color: var(--primary-color)
-}
-
 .os-scrollbar-vertical .os-scrollbar-handle {
   background-color: var(--color-theme-mix-20);
 }
