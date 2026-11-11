@@ -8,7 +8,9 @@ const required = ['index.html', 'about/index.html', 'posts/index.html',
   'posts/hello-world/index.html', 'timeline/index.html', 'tags/index.html',
   'archives/index.html', 'search/index.html', '404.html', 'rss.xml',
   'sitemap.xml', 'robots.txt', 'favicon.svg', 'og.png', 'search-index.json',
-  'tags/astro/index.html', 'tags/github-pages/index.html']
+  'tags/astro/index.html', 'tags/github-pages/index.html', 'messages/index.html',
+  'friends/index.html', 'images/hero.webp', 'images/avatar.svg',
+  'fonts/ZaoZiGongFangYueYuan.woff2', 'fonts/Oxanium-Medium.woff2']
 for (const file of required) assert.ok(existsSync(path.join(root, file)), `Missing output: ${file}`)
 
 function files(dir) {
@@ -44,7 +46,7 @@ for (const filename of pages) {
     assert.equal(new URL(canonical[1]).origin, origin, `${relative}: incorrect canonical origin`)
     assert.match(html, /property="og:image" content="https:\/\/heliumboom.github.io\/og.png"/, `${relative}: missing share image`)
   }
-  assert.doesNotMatch(html, /Your Name|Your Site Name|your@email\.com|github\.com\/your["/]|Site Description|AstroPaper/, `${relative}: template remains`)
+  assert.doesNotMatch(html, /Your Name|Your Site Name|示例作者|Kanade Author|your@email\.com|github\.com\/your["/]|Site Description|AstroPaper/, `${relative}: template remains`)
   assert.doesNotMatch(html, /fonts\.(googleapis|gstatic)\.com/, `${relative}: remote font`)
   for (const [, raw] of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) checkLink(raw, pageUrl)
 }
@@ -57,5 +59,14 @@ const search = JSON.parse(readFileSync(path.join(root, 'search-index.json'), 'ut
 const firstPost = search.find(post => post.id === 'hello-world')
 assert.ok(firstPost?.content.includes('技术笔记'), 'Chinese full-text search content missing')
 assert.equal(firstPost.url, '/posts/hello-world/')
+for (const [route, tag] of [['astro', 'Astro'], ['github-pages', 'GitHub Pages'], ['博客搭建', '博客搭建']]) {
+  const html = readFileSync(path.join(root, `tags/${route}/index.html`), 'utf8')
+  const destination = html.match(/http-equiv="refresh"[^>]*content="0;url=([^"]+)"/)
+  assert.ok(destination, `Missing legacy tag redirect: ${route}`)
+  const url = new URL(destination[1].replaceAll('&amp;', '&'), origin)
+  assert.equal(url.pathname, '/posts/')
+  assert.equal(url.searchParams.get('tag'), tag)
+}
+assert.match(readFileSync(path.join(root, 'messages/index.html'), 'utf8'), /不会发送给站长/)
 assert.ok(statSync(path.join(root, 'og.png')).size > 1000, 'Empty share image')
-console.log(`Verified ${fullPages} pages, redirects/previews, ${checkedLinks} local links, RSS, sitemap and Chinese search index.`)
+console.log(`Verified ${fullPages} Kanade pages, legacy redirects, ${checkedLinks} local links, RSS, sitemap and Chinese full-text search.`)

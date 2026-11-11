@@ -1,271 +1,39 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro'
-import '@/styles/global.css'
+import { withBase } from "../lib/urls";
+import BlogLayout from "../layouts/BlogLayout.astro";
+import { personalInfo } from "../config";
 ---
-
-<BaseLayout pageTitle="关于" description="关于 HeliumBoom，以及这个记录技术探索与思考的小站。">
-  <article class="about-container">
-    <header class="about-hero">
-      <div class="ambient-glow"></div>
-      <h1 class="title">你好，我是 HeliumBoom。</h1>
-      <p class="tagline">技术探索 · 开发实践 · 学习与思考</p>
-      <p class="poetic-intro">让每一篇文章留下一个可以再次找到的答案。</p>
-    </header>
-    <div class="about-body">
-      <section class="about-section">
-        <p>欢迎来到我的个人主页与技术博客。这里是一个安静的记录空间，用来整理技术探索、开发实践，以及解决问题时留下的思考。</p>
-      </section>
-      <div class="divider">· · ·</div>
-      <section class="about-section">
-        <h2>在这里读到什么</h2>
-        <ul class="about-list">
-          <li><strong>技术笔记</strong>：从一个具体问题出发，记录理解它、验证它、解决它的过程。</li>
-          <li><strong>开发实践</strong>：工具的使用方式、实现中的取舍，以及可以再次用上的经验。</li>
-          <li><strong>学习与思考</strong>：把零散的发现整理成文章，让知识有迹可循。</li>
-        </ul>
-        <p>这个站点刚刚起步，内容会随着新的实践逐步积累。</p>
-      </section>
-      <div class="divider">· · ·</div>
-      <section class="about-section">
-        <h2>找到我</h2>
-        <p><a href="https://github.com/HeliumBoom" class="theme-link">GitHub · HeliumBoom</a></p>
-        <p><a href="/rss.xml" class="theme-link">RSS 订阅</a>：通过阅读器获取新文章。</p>
-      </section>
-      <section class="about-section">
-        <h2>关于本站</h2>
-        <p>本站使用 <a href="https://astro.build/" class="theme-link">Astro</a> 构建，基于 <a href="https://github.com/huamurui/pudding" class="theme-link">Pudding</a> 主题定制，托管于 GitHub Pages。</p>
-        <p>用 Markdown 写作，用 Git 管理，让注意力更多地留在内容上。</p>
-      </section>
+<BlogLayout title="关于" heroTitle="你好，我是 HeliumBoom" heroSubtitle="技术探索 · 开发实践 · 学习与思考">
+  <section class="card page-card about-card">
+    <div class="about-intro"><img src={personalInfo.avatar} width="90" height="90" alt="HeliumBoom 的花朵头像" /><div><span class="eyebrow">HELLO, I'M HELIUMBOOM</span><h2>欢迎来到我的小站 <span class="accent">✿</span></h2><p>技术笔记 / 开发实践 / 保持好奇</p></div></div>
+    <div class="prose">
+      <h2>关于我</h2>
+      <p>你好，我是 HeliumBoom。这里是一个安静的记录空间，用来整理技术探索、开发实践，以及解决问题时留下的思考。</p>
+      <p>这个站点刚刚起步，内容会随着新的实践逐步积累。</p>
+      <blockquote><p>让每一篇文章留下一个可以再次找到的答案。</p></blockquote>
+      <h2>在这里读到什么</h2>
+      <ul><li><strong>技术笔记</strong>：从一个具体问题出发，记录理解它、验证它、解决它的过程。</li><li><strong>开发实践</strong>：工具的使用方式、实现中的取舍，以及可以再次用上的经验。</li><li><strong>学习与思考</strong>：把零散的发现整理成文章，让知识有迹可循。</li></ul>
+      <h2>关于本站</h2>
+      <p>本站使用 Astro、Vue 与 Tailwind CSS 构建，基于 <a href="https://github.com/sudoriaa/Kanade-Astro/tree/codex/astro-theme">Kanade</a> 主题，托管于 GitHub Pages，并保留了从旧主题迁移而来的圆形明暗切换动画。</p>
+      <p>用 Markdown 写作，用 Git 管理，让注意力更多地留在内容上。</p>
     </div>
-  </article>
-
-  <style>
-    /* Container & Layout */
-    .about-container {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: var(--spacing-xl) var(--spacing-md);
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-lg);
-      position: relative;
-    }
-
-    /* Ambient Lighting Effect */
-    .ambient-glow {
-      position: absolute;
-      top: -80px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 350px;
-      height: 200px;
-      background: radial-gradient(circle, var(--color-theme-mix-20) 0%, transparent 70%);
-      filter: blur(40px);
-      z-index: -1;
-      pointer-events: none;
-      opacity: 0.6;
-    }
-
-    /* Hero */
-    .about-hero {
-      text-align: center;
-      padding: var(--spacing-xl) 0 var(--spacing-sm);
-      position: relative;
-    }
-
-    .about-hero .title {
-      font-size: clamp(1.8rem, 4vw, 2.5rem);
-      font-weight: var(--font-weight-extrabold);
-      color: var(--text-primary);
-      margin: 0;
-      letter-spacing: -0.02em;
-    }
-
-    .about-hero .sub-title {
-      font-size: var(--font-size-lg);
-      font-weight: var(--font-weight-normal);
-      color: var(--text-muted);
-      font-family: var(--font-family-mono);
-    }
-
-    .tagline {
-      font-size: var(--font-size-sm);
-      font-family: var(--font-family-mono);
-      color: var(--text-muted);
-      margin: var(--spacing-xs) 0 0;
-      letter-spacing: 0.02em;
-    }
-
-    .poetic-intro {
-      font-size: var(--font-size-base);
-      font-style: italic;
-      color: var(--text-secondary);
-      max-width: 520px;
-      margin: var(--spacing-md) auto 0;
-      line-height: var(--line-height-relaxed);
-    }
-
-    .poetic-intro2 {
-      font-size: var(--font-size-sm);
-      font-style: italic;
-      color: var(--text-secondary);
-      max-width: 520px;
-      margin: var(--spacing-md) auto 0;
-      line-height: var(--line-height-relaxed);
-      text-align: start;
-    }
-
-    /* Body */
-    .about-body {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-md);
-    }
-
-    .about-section {
-      line-height: var(--line-height-relaxed);
-      color: var(--text-secondary);
-      font-size: var(--font-size-base);
-    }
-
-    .about-section p {
-      margin: 0 0 var(--spacing-sm);
-    }
-
-    .about-section p:last-child {
-      margin-bottom: 0;
-    }
-
-    .about-section h2 {
-      font-size: var(--font-size-lg);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-primary);
-      margin: 0 0 var(--spacing-sm);
-    }
-
-    .about-section strong {
-      color: var(--text-primary);
-      font-weight: var(--font-weight-semibold);
-    }
-
-    /* Inline aside — lighter, parenthetical */
-    .aside {
-      color: var(--text-muted);
-      font-size: 0.92em;
-    }
-
-    /* Block aside — styled like a diary excerpt */
-    .aside-block {
-      color: var(--text-muted);
-      font-size: var(--font-size-sm);
-      border-left: 2px solid var(--border-color);
-      padding-left: var(--spacing-md);
-      margin-top: var(--spacing-sm);
-      font-style: italic;
-      line-height: var(--line-height-relaxed);
-    }
-
-    /* Divider */
-    .divider {
-      text-align: center;
-      color: var(--text-muted);
-      font-size: var(--font-size-sm);
-      letter-spacing: 0.5em;
-      padding: var(--spacing-xs) 0;
-      user-select: none;
-      opacity: 0.5;
-    }
-
-    /* List */
-    .about-list {
-      list-style: none;
-      padding: 0;
-      margin: var(--spacing-xs) 0 0;
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-xs);
-    }
-
-    .about-list li {
-      font-size: var(--font-size-sm);
-      color: var(--text-secondary);
-      padding: var(--spacing-xs) var(--spacing-sm);
-      border-radius: var(--radius-md);
-      background-color: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      transition: border-color var(--transition-normal);
-    }
-
-    .about-list li:hover {
-      border-color: var(--color-theme-mix-20);
-    }
-
-    .list-label {
-      font-family: var(--font-family-mono);
-      font-weight: var(--font-weight-semibold);
-      color: var(--theme-color);
-      font-size: var(--font-size-sm);
-    }
-
-    /* Tags */
-    .tags-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--spacing-sm);
-    }
-
-    .tool-tag {
-      font-size: var(--font-size-sm);
-      font-family: var(--font-family-mono);
-      color: var(--text-secondary);
-      background-color: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      padding: 0.35rem 0.7rem;
-      border-radius: var(--radius-lg);
-      transition:
-        transform var(--transition-slow),
-        border-color var(--transition-normal),
-        color var(--transition-normal);
-      cursor: default;
-      user-select: none;
-    }
-
-    .tool-tag:hover {
-      color: var(--theme-color);
-      border-color: var(--theme-color);
-      transform: translateY(-1px);
-    }
-
-    /* Footer */
-    .about-footer {
-      text-align: center;
-      padding: var(--spacing-lg) 0;
-      border-top: 1px solid var(--border-color);
-      font-size: var(--font-size-sm);
-      color: var(--text-muted);
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-xs);
-    }
-
-    .about-footer p {
-      margin: 0;
-    }
-
-    .theme-link {
-      color: var(--theme-color);
-      text-decoration: none;
-      font-weight: var(--font-weight-semibold);
-      border-bottom: 1px solid transparent;
-      transition: border-color var(--transition-normal);
-    }
-
-    .theme-link:hover {
-      border-bottom-color: var(--theme-color);
-    }
-
-    .copyright {
-      font-size: var(--font-size-xs);
-    }
-  </style>
-</BaseLayout>
+    <div class="about-links"><a class="btn" href={personalInfo.github} target="_blank" rel="noopener noreferrer"><span class="icon-[jam--github]" aria-hidden="true"></span>GitHub</a><a class="btn secondary" href={withBase("/rss.xml")}>RSS 订阅</a><a class="btn secondary" href={withBase("/posts/")}>读读我的文章<span class="icon-[lucide--arrow-right]" aria-hidden="true"></span></a></div>
+    <div class="about-end">谢谢你，在互联网的某个角落找到了这里。<span>✿</span></div>
+  </section>
+</BlogLayout>
+<style>
+.about-intro { display: flex; align-items: center; gap: 22px; }
+.about-intro img { border-radius: 26px; transform: rotate(-4deg); box-shadow: 5px 5px 0 var(--accent-soft); }
+.about-intro .eyebrow { font-size: 9px; }
+.about-intro h2 { font-size: 23px; margin: 7px 0; }
+.about-intro p { color: var(--muted); font-size: 11px; margin: 0; }
+.interest-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.interest-grid > div { border-radius: 12px; background: var(--accent-soft); padding: 20px; }
+.interest-grid span { color: var(--accent); font-size: 25px; display: block; margin-bottom: 13px; }
+.interest-grid strong { font-size: 14px; font-weight: 400; }
+.interest-grid p { font-size: 11px; line-height: 2; color: var(--muted); margin-bottom: 0; }
+.about-links { display: flex; flex-wrap: wrap; gap: 12px; margin: 25px 0; font-size: 12px; }
+.about-end { text-align: center; border-top: 1px dashed var(--line); margin-top: 32px; padding-top: 25px; color: var(--muted); font-size: 11px; }
+.about-end span { display:block; font-size: 22px; color: var(--accent); margin-top: 10px; }
+@media(max-width:480px) { .about-intro { flex-direction: column; text-align: center; } .about-intro h2 { font-size: 21px; } .interest-grid { gap: 10px; } .interest-grid > div { padding: 15px; } }
+</style>

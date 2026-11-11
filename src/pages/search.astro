@@ -1,9 +1,6 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro'
+import BlogLayout from "../layouts/BlogLayout.astro";
 ---
-<BaseLayout pageTitle="搜索">
-  <section style="padding: 2rem 1rem;">
-    <h1>搜索文章</h1>
-    <p>在右上方的搜索框中输入标题、标签或正文关键词。</p>
-  </section>
-</BaseLayout>
+<BlogLayout title="搜索" heroTitle="在文字里，找一点灵感">
+  <section class="card page-card"><h1>搜索文章</h1><p>在搜索框中输入标题、标签或正文关键词，也可以使用导航栏的放大镜重新打开搜索。</p></section>
+</BlogLayout>

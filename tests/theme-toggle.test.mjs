@@ -4,10 +4,9 @@ import test from 'node:test'
 import vm from 'node:vm'
 import ts from 'typescript'
 
-const component = await readFile(new URL('../src/components/ThemeToggle.svelte', import.meta.url), 'utf8')
-const script = component.match(/<script lang="ts">([\s\S]*?)<\/script>/)[1]
-const compiled = ts.transpileModule(script.replace(/^\s*import .+;\s*$/gm, ''), {
-  compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext }
+const script = await readFile(new URL('../src/scripts/theme.ts', import.meta.url), 'utf8')
+const compiled = ts.transpileModule(script, {
+  compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS }
 }).outputText
 
 function deferred() {
@@ -22,9 +21,8 @@ function setup({ reducedMotion = false, supportsTransitions = true } = {}) {
   const attributes = new Map([['data-theme', 'dark']])
   const animations = new Set()
   const transitions = []
-  let dispose
   const html = {
-    classList: { add: (...names) => names.forEach(name => classes.add(name)), remove: (...names) => names.forEach(name => classes.delete(name)) },
+    classList: { contains: name => classes.has(name), toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name), add: (...names) => names.forEach(name => classes.add(name)), remove: (...names) => names.forEach(name => classes.delete(name)) },
     getAttribute: name => attributes.get(name),
     setAttribute: (name, value) => attributes.set(name, value),
     animate(frames, options) {
@@ -48,16 +46,16 @@ function setup({ reducedMotion = false, supportsTransitions = true } = {}) {
     } : undefined
   }
   const context = vm.createContext({
-    document,
+    document, Event, exports: {},
     localStorage: { getItem: () => null, setItem() {} },
-    onMount: callback => { dispose = callback() },
     window: { innerWidth: 1200, innerHeight: 800,
       matchMedia: query => ({ matches: query.includes('reduced-motion') ? reducedMotion : true, addEventListener() {}, removeEventListener() {} }),
-      addEventListener() {}, removeEventListener() {} }
+      addEventListener() {}, removeEventListener() {}, dispatchEvent() {} }
   })
-  vm.runInContext(`${compiled}\nglobalThis.toggle = toggleTheme; globalThis.apply = applyTheme`, context)
+  vm.runInContext(compiled, context)
+  context.exports.initTheme()
   const event = { detail: 1, clientX: 1150, clientY: 30, currentTarget: { getBoundingClientRect: () => ({ left: 1130, top: 10, width: 40, height: 40 }) } }
-  return { animations, transitions, attributes, classes, dispose, click: () => context.toggle(event), apply: theme => context.apply(theme) }
+  return { animations, transitions, attributes, classes, dispose: context.exports.cancelThemeTransition, click: () => context.exports.toggleTheme(event), apply: theme => context.exports.applyTheme(theme) }
 }
 
 test('repeated dark/light cycles release filled root snapshots before the next transition', async() => {

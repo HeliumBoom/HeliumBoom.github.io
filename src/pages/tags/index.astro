@@ -1,25 +1,11 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro'
-import { getPublishedPosts } from '@/utils/content'
-import { getTagUrl } from '@/utils/helpers'
-
-const counts = new Map<string, number>()
-for (const post of await getPublishedPosts()) {
-  for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) || 0) + 1)
-}
-const tags = [...counts].sort(([a], [b]) => a.localeCompare(b, 'zh-CN'))
+import BlogLayout from "../../layouts/BlogLayout.astro";
+import { getPosts, getTags, summarize } from "../../lib/posts";
+import { withBase } from "../../lib/urls";
+const posts = (await getPosts()).map(summarize);
+const tags = getTags(posts);
 ---
-
-<BaseLayout pageTitle="标签">
-  <section class="tag-index">
-    <h1>标签</h1>
-    <p>按主题寻找文章。</p>
-    <ul>{tags.map(([tag, count]) => <li><a href={getTagUrl(tag)}>{tag} <span>· {count}</span></a></li>)}</ul>
-  </section>
-</BaseLayout>
-<style>
-  .tag-index { padding: 2rem 1rem; }
-  p, span { color: var(--text-secondary); }
-  ul { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; padding: 0; }
-  a { display: block; padding: .5rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); }
-</style>
+<BlogLayout title="标签" heroTitle="按主题，寻找文章">
+  <section class="card page-card"><h1>标签</h1><div class="tag-links">{tags.map(tag => <a class="btn secondary" href={withBase(`/posts/?tag=${encodeURIComponent(tag)}`)}>{tag} · {posts.filter(post => post.tags.includes(tag)).length}</a>)}</div></section>
+</BlogLayout>
+<style>.tag-links { display:flex; flex-wrap:wrap; gap:12px; }</style>

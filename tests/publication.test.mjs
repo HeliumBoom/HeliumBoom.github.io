@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { isPublished, shanghaiDate } from '../src/utils/publication.mjs'
+import { isPublished, shanghaiDate } from '../src/lib/publication.mjs'
 
 test('publication uses the Shanghai calendar day, including midnight and year boundaries', () => {
   const now = new Date('2026-12-31T16:00:00Z')

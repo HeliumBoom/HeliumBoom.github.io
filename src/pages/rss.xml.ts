@@ -1,23 +1,12 @@
-import rss from '@astrojs/rss'
-import type { APIRoute } from 'astro'
-import { getPublishedPosts } from '@/utils/content'
-import { siteConfig } from '@/config/site.config'
-import { getLocale } from '@/config/i18n.config'
-import { buildUrl, extractExcerptFromMarkdown, getPostUrl } from '@/utils/helpers'
-
-export const GET:APIRoute = async(context) => {
-  const blog = (await getPublishedPosts()).sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-  return rss({
-    title: siteConfig.name,
-    description: siteConfig.description,
-    site: new URL(buildUrl(''), context.site || siteConfig.site || siteConfig.url),
-    items: blog.map((post) => ({
-      title: post.data.title,
-      pubDate: post.data.date,
-      description: post.data.description || extractExcerptFromMarkdown(post.body || ''),
-      link: getPostUrl(post.id)
-    })),
-    customData: `<language>${getLocale(siteConfig.locale).toLowerCase()}</language>`,
-    stylesheet: buildUrl('rss.xsl')
-  })
-}
+import { withBase } from "../lib/urls";
+import type { APIRoute } from "astro";
+import { getPosts } from "../lib/posts";
+import { siteInfo } from "../config";
+const escape = (value: string) => value.replace(/[<>&"']/g, character => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[character]!);
+export const GET: APIRoute = async () => {
+  const posts = await getPosts();
+  return new Response(`<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>${escape(siteInfo.title)}</title><description>${escape(siteInfo.description)}</description><link>${escape(siteInfo.url)}</link><language>zh-CN</language>
+${posts.map(post => { const url = new URL(withBase(`/posts/${post.id}/`), siteInfo.url).href; return `<item><title>${escape(post.data.title)}</title><link>${escape(url)}</link><guid>${escape(url)}</guid><description>${escape(post.data.description)}</description><pubDate>${post.data.date.toUTCString()}</pubDate><category>${escape(post.data.category)}</category></item>`; }).join("\n")}
+</channel></rss>`, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
+};
