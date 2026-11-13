@@ -16,3 +16,16 @@
 - 诊断输出仅用于本地排查，未包含在发布源码中。
 
 API 参考：[MDN Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API)。
+
+## 手机 Chrome 圆心偏移（2026-11-13）
+
+用户反馈：真机 Chrome 的主题圆心偏向点击位置的左上。旧实现将 `clientX/Y` 直接写入根快照的 `clip-path`，混用了布局视口坐标和快照坐标；移动地址栏等浏览器界面可能令两者的原点不同。参见 [Chromium 的视口与快照说明](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/third_party/blink/renderer/core/view_transition/#viewport-sizes)。
+
+修复在视口原点放置一个透明、不可交互的临时命名元素，在 `transition.ready` 后读取其快照变换，将真实点击位置换算到根快照内；展开半径也使用根快照尺寸。键盘激活继续从按钮中心开始，触摸事件不会仅因 `detail === 0` 被误判为键盘。完成、打断和卸载时一并移除临时元素，保留已有的动画清理策略。
+
+验证：
+
+- 两项新增回归在修复前失败，修复后全量 8 项通过；覆盖水平/垂直偏移、无偏移、完整展开半径、触摸与键盘及临时元素清理。
+- Astro/Vue 检查和生产构建通过，9 个完整页面及 355 条本地链接通过产物验证。
+- 390px 浏览器预览中实测圆心为点击坐标 `(310, 31)`；滚动文章页的键盘圆心为按钮中心 `(309.5, 31)`，结束后临时元素为零，控制台无错误。
+- 地址栏差异由坐标回归用例覆盖，当前环境未连接用户的手机，不能将窄屏预览等同于 Chrome 真机验收。
